@@ -206,10 +206,10 @@ void soundSignal(unsigned int aCm) {
       delay(500);
     } else if (aCm > 40) {
       tone(BUZZER_IO_Pin, freq[1]);
-      delay(500);
-    } else  if (aCm > 20) {
+      delay(1000);
+    } else  if (aCm > 10) {
       tone(BUZZER_IO_Pin, freq[2]);
-      delay(500);
+      delay(1500);
     }
     noTone(BUZZER_IO_Pin);
     digitalWrite(BUZZER_VCC_Pin, LOW);
