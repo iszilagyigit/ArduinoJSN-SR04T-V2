@@ -199,17 +199,17 @@ unsigned int measure(SoftwareSerial &sensor, byte vccPin) {
 // depending on the minimal measurement make a sound
 void soundSignal(unsigned int aCm) {
 
-  if (aCm < 50) {
+  if (aCm < 70) {
     digitalWrite(BUZZER_VCC_Pin, HIGH);
-    if (aCm > 40) {
+    if (aCm > 50) {
       tone(BUZZER_IO_Pin, freq[0]);
       delay(500);
-    } else if (aCm > 30) {
+    } else if (aCm > 40) {
       tone(BUZZER_IO_Pin, freq[1]);
-      delay(1000);
-    } else  if (aCm > 10) { // 0 -  30 cm
+      delay(500);
+    } else  if (aCm > 20) {
       tone(BUZZER_IO_Pin, freq[2]);
-      delay(3000);
+      delay(500);
     }
     noTone(BUZZER_IO_Pin);
     digitalWrite(BUZZER_VCC_Pin, LOW);
