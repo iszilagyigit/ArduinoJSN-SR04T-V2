@@ -5,18 +5,31 @@
  RPI3 - SPI master
  Arduino - with 4 distance sensor - slave
 
+expected output with test arduino: jsnr04t-spi.ino:
+127|rpi3:/data/test # ./spitest                                                
+ Started SPI-Mode.......: 0
+Wortlaenge.....: 8
+Geschwindigkeit: 7629 Hz
+ response:  255 
+ response:  4 
+ response:  5 
+ response:  6 
+ response:  7 
+rpi3:/data/test # 
+
  @author iszilagyi
 */
 
 #include <linux/spi/spidev.h>   
 #include <fcntl.h>				
 #include <sys/ioctl.h>			
-#include <stdio.h>  // for priintf
-#include <stdlib.h> // used by exit(1)
+#include <stdio.h>  // for printf
+
 
 
 int spi_cs0_fd;				//file descriptor for the SPI device
 int spi_cs1_fd;				//file descriptor for the SPI device
+
 unsigned char spi_mode; //8bit
 unsigned char spi_bitsPerWord;//8bit
 unsigned short spi_speed;//32bit
@@ -59,49 +72,49 @@ int SpiOpenPort (int spi_device)
     if (*spi_cs_fd < 0)
     {
         perror("Error - Could not open SPI device");
-        exit(1);
+        return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_WR_MODE, &spi_mode);
     if(status_value < 0)
     {
         perror("Could not set SPIMode (WR)...ioctl fail");
-        exit(1);
+        return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_RD_MODE, &spi_mode);
     if(status_value < 0)
     {
       perror("Could not set SPIMode (RD)...ioctl fail");
-      exit(1);
+      return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_WR_BITS_PER_WORD, &spi_bitsPerWord);
     if(status_value < 0)
     {
       perror("Could not set SPI bitsPerWord (WR)...ioctl fail");
-      exit(1);
+      return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_RD_BITS_PER_WORD, &spi_bitsPerWord);
     if(status_value < 0)
     {
       perror("Could not set SPI bitsPerWord(RD)...ioctl fail");
-      exit(1);
+      return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed);
     if(status_value < 0)
     {
       perror("Could not set SPI speed (WR)...ioctl fail");
-      exit(1);
+      return 1;
     }
 
     status_value = ioctl(*spi_cs_fd, SPI_IOC_RD_MAX_SPEED_HZ, &spi_speed);
     if(status_value < 0)
     {
       perror("Could not set SPI speed (RD)...ioctl fail");
-      exit(1);
+      return 1;
     }
     
   //  printf("SPI-Device.....: %s\n", spi_device);
@@ -109,7 +122,7 @@ int SpiOpenPort (int spi_device)
 	printf("Wortlaenge.....: %d\n",spi_bitsPerWord);
 	printf("Geschwindigkeit: %d Hz\n",  spi_speed);
 
-    return(status_value);
+    return 0;
 }
 
 
@@ -134,9 +147,9 @@ int SpiClosePort (int spi_device)
     if(status_value < 0)
     {
     	perror("Error - Could not close SPI device");
-    	exit(1);
+    	return 1;
     }
-    return status_value;
+    return 0;
 }
 
 
@@ -175,19 +188,26 @@ int SpiWriteAndRead (int spi_device, unsigned char *data)
 	if(retVal < 0)
 	{
 		perror("Error - Problem transmitting spi data..ioctl");
-		exit(1);
+		return -1;
 	}
-	printf(" spi.rx %lu ",(unsigned long)(spi[0].rx_buf));
 	return retVal;
 }
 
 int main(void) {
 	printf(" Started ");
-	SpiOpenPort(0);
-	unsigned char data  = 0x01; //8 bit
-	int retVal = SpiWriteAndRead(0, &data);
-	printf(" response: %d  %d", data, retVal);
-	
-	SpiClosePort(0);
+	int op1 = SpiOpenPort(0);
+    if (op1 == 1) {
+        return op1;
+    }
+     unsigned char data = 0xFF;
+    // 8 bit
+	for (unsigned char i  = 0x01; i <= 0x05; i++) {
+        data = i != 0x05 ? i : 0xFF;
+    	SpiWriteAndRead(0, &data);
+        // the 1st response comes only after the 2nd request?! 
+    	printf(" response:  %d \r\n", data);
+	}
+	int ret = SpiClosePort(0);
+    return ret;
 }
 
