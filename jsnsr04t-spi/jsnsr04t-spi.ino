@@ -40,12 +40,17 @@ ISR (SPI_STC_vect)
   // then return the measured distance for that sensor.
   if (c == 0xFFFFFFFFL) {
     SPDR = measured;
-  }else if (c >= 1 && c <= 4)  { // sensors 1 -4
+  }else if (c >= 1 && c <= sizeof(lastMeasure))  { // sensors 1 -4
+      // c == 1 is the first sensor!
     if (lastMeasure[c-1] == sensorOffline) {
-      SPDR = 0xFAL;
+      SPDR = 0xFA;
     }else {
-      SPDR = 0x000000FFL & lastMeasure[c-1];
+      SPDR = 0xFF & lastMeasure[c-1];
     }
+  } else {
+    // the recieved command is not between 1 and nr of sensors
+    // 1 -> first sensor! (not starting with 0
+     SPDR = 0xAA;
   }
 }
 

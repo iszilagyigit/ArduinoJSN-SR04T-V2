@@ -20,6 +20,7 @@ rpi3:/data/test #
  @author iszilagyi
 */
 
+#include <stdint.h>
 #include <linux/spi/spidev.h>   
 #include <fcntl.h>				
 #include <sys/ioctl.h>			
@@ -30,17 +31,11 @@ rpi3:/data/test #
 int spi_cs0_fd;				//file descriptor for the SPI device
 int spi_cs1_fd;				//file descriptor for the SPI device
 
-unsigned char spi_mode; //8bit
-unsigned char spi_bitsPerWord;//8bit
-unsigned short spi_speed;//32bit
+uint8_t spi_mode; // 8 bit unsigned
+uint8_t spi_bitsPerWord;
+uint32_t spi_speed;//32 bit unsigned
 
 
-
-//***********************************
-//***********************************
-//********** SPI OPEN PORT **********
-//***********************************
-//***********************************
 //spi_device	0=CS0, 1=CS1
 int SpiOpenPort (int spi_device)
 {
@@ -125,13 +120,6 @@ int SpiOpenPort (int spi_device)
     return 0;
 }
 
-
-
-//************************************
-//************************************
-//********** SPI CLOSE PORT **********
-//************************************
-//************************************
 int SpiClosePort (int spi_device)
 {
 	int status_value = -1;
@@ -160,7 +148,7 @@ int SpiClosePort (int spi_device)
 //*******************************************
 //*******************************************
 //data		Bytes to write.  Contents is overwritten with bytes read.
-int SpiWriteAndRead (int spi_device, unsigned char *data)
+int SpiWriteAndRead (int spi_device, uint64_t *data)
 {
 	struct spi_ioc_transfer spi[1];
 	int retVal = -1;
@@ -172,10 +160,10 @@ int SpiWriteAndRead (int spi_device, unsigned char *data)
     	spi_cs_fd = &spi_cs0_fd;
 
 	//one spi transfer for each byte
-		spi[0].tx_buf        = (unsigned long)data; // transmit from "data"
-		spi[0].rx_buf        = (unsigned long)data; // receive into "data"
+		spi[0].tx_buf        =  data; // transmit from "data"
+		spi[0].rx_buf        =  data; // receive into "data"
 		spi[0].len           = 1;
-		spi[0].delay_usecs   = 0 ;
+		spi[0].delay_usecs   = 0 ; //TODO check if is needed to increase it
 		spi[0].speed_hz      = spi_speed ;
 		spi[0].bits_per_word = spi_bitsPerWord ;
 		spi[0].cs_change = 0;
@@ -199,9 +187,9 @@ int main(void) {
     if (op1 == 1) {
         return op1;
     }
-     unsigned char data = 0xFF;
+    uint64_t data = 0xFFFFFFFF;
     // 8 bit
-	for (unsigned char i  = 0x01; i <= 0x05; i++) {
+	for (uint8_t i  = 0x01; i <= 0x05; i++) {
         data = i != 0x05 ? i : 0xFF;
     	SpiWriteAndRead(0, &data);
         // the 1st response comes only after the 2nd request?! 
