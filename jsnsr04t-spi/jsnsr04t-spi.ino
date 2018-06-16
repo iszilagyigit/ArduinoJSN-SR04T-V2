@@ -3,7 +3,7 @@
 const byte sensorOffline = 0xFF;
 
 // last measured values in cm (-1 sensor N/A or not  working)
-byte lastMeasure[] = {23, 27, sensorOffline, 29};
+byte lastMeasure[] = {0x19, 0x2A, sensorOffline, 0x2C};
 // 32 bit having the 4 bytes from lastMeasure
 volatile unsigned long measured;
 
@@ -26,7 +26,7 @@ void setup() {
   unsigned long v3 = (unsigned long) lastMeasure[2] << 8;
   unsigned long v2 = (unsigned long) lastMeasure[1] << 16;
   unsigned long v1 = (unsigned long) lastMeasure[0] << 24;
-  measured = v1 | v2 | v3 | v4;
+  measured = 0x192AFF2D;
 
 }
 
@@ -38,9 +38,9 @@ ISR (SPI_STC_vect)
   // if value is 0xFFFF_FFFF -> send all measured data!
   // if the value is between 0x00001 .. 0x00004
   // then return the measured distance for that sensor.
-  if (c == 0xFFFFFFFFL) {
+  if (c == 0xFF) {
     SPDR = measured;
-  }else if (c >= 1 && c <= sizeof(lastMeasure))  { // sensors 1 -4
+  }else if (c >= 1 && c <= 4)  { // sensors 1 -4
       // c == 1 is the first sensor!
     if (lastMeasure[c-1] == sensorOffline) {
       SPDR = 0xFA;

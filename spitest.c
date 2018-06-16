@@ -5,16 +5,22 @@
  RPI3 - SPI master
  Arduino - with 4 distance sensor - slave
 
-expected output with test arduino: jsnr04t-spi.ino:
-127|rpi3:/data/test # ./spitest                                                
- Started SPI-Mode.......: 0
+expected output with test arduino spi client : jsnr04t-spi.ino: (tag 2.0)
+                                                
+pi@raspberrypi:~/gitclones/ArduinoJSN-SR04T-V2 $ ./spitest 
+SPI-Mode.......: 0
 Wortlaenge.....: 8
 Geschwindigkeit: 7629 Hz
- response:  255 
- response:  4 
- response:  5 
- response:  6 
- response:  7 
+ response 0:  0x2d 
+ response 0:  0x2d 
+ response  0xaa 
+ response  0x19 
+ response  0x2a 
+ response  0xfa 
+ response  0x2c 
+ response  0x2d 
+ response  0x2d 
+
 rpi3:/data/test # 
 
  @author iszilagyi
@@ -139,14 +145,8 @@ int SpiClosePort (int spi_device)
     return 0;
 }
 
-
-
-//*******************************************
-//*******************************************
-//********** SPI WRITE & READ DATA **********
-//*******************************************
-//*******************************************
-//data		Bytes to write.  Contents is overwritten with bytes read.
+// spi_device  0 or 1
+// data		Bytes to write.  Contents is overwritten with bytes read.
 int SpiWriteAndRead (int spi_device, uint32_t *data)
 {
 	struct spi_ioc_transfer spi[1];
@@ -181,20 +181,29 @@ int SpiWriteAndRead (int spi_device, uint32_t *data)
 }
 
 int main(void) {
-	printf(" Started ");
+
 	int op1 = SpiOpenPort(0);
-    if (op1 == 1) {
-        return op1;
-    }
-    uint32_t data = 0xFFFFFFFF;
-    // 8 bit
-	for (uint8_t i  = 0x01; i <= 0x05; i++) {
-        data = i != 0x05 ? i : 0xFF;
-    	SpiWriteAndRead(0, &data);
-        // the 1st response comes only after the 2nd request?! 
-    	printf(" response:  %d \r\n", data);
+	if (op1 == 1) {
+		return op1;
 	}
-	int ret = SpiClosePort(0);
-    return ret;
+    //for (uint8_t j=0;j<=5;j++) {
+
+	uint32_t data = 0xFF;
+	SpiWriteAndRead(0, &data);
+	printf(" response 0:  %#x \r\n", data);
+	SpiWriteAndRead(0, &data);
+	printf(" response 0:  %#x \r\n", data);
+	  
+	// 8 bit
+	for (uint8_t i  = 0x01; i <= 0x07; i++) {
+		data = i <= 0x04 ? i : 0xFF;
+		SpiWriteAndRead(0, &data);
+		// the 1st response comes only after the 2nd request?! 
+		printf(" response  %#x \r\n", data);
+	}
+	//}
+	
+	SpiClosePort(0);
+    return 0;
 }
 
