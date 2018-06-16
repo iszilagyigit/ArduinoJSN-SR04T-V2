@@ -25,8 +25,7 @@ rpi3:/data/test #
 #include <fcntl.h>				
 #include <sys/ioctl.h>			
 #include <stdio.h>  // for printf
-
-
+#include <unistd.h> // for close
 
 int spi_cs0_fd;				//file descriptor for the SPI device
 int spi_cs1_fd;				//file descriptor for the SPI device
@@ -148,7 +147,7 @@ int SpiClosePort (int spi_device)
 //*******************************************
 //*******************************************
 //data		Bytes to write.  Contents is overwritten with bytes read.
-int SpiWriteAndRead (int spi_device, uint64_t *data)
+int SpiWriteAndRead (int spi_device, uint32_t *data)
 {
 	struct spi_ioc_transfer spi[1];
 	int retVal = -1;
@@ -160,14 +159,14 @@ int SpiWriteAndRead (int spi_device, uint64_t *data)
     	spi_cs_fd = &spi_cs0_fd;
 
 	//one spi transfer for each byte
-		spi[0].tx_buf        =  data; // transmit from "data"
-		spi[0].rx_buf        =  data; // receive into "data"
+		spi[0].tx_buf        =  (uint32_t) data; // transmit from "data"
+		spi[0].rx_buf        =  (uint32_t) data; // receive into "data"
 		spi[0].len           = 1;
 		spi[0].delay_usecs   = 0 ; //TODO check if is needed to increase it
 		spi[0].speed_hz      = spi_speed ;
 		spi[0].bits_per_word = spi_bitsPerWord ;
 		spi[0].cs_change = 0;
-        spi[0].pad = 0;
+        spi[0].pad = 0; 
 		
 	
 
@@ -187,7 +186,7 @@ int main(void) {
     if (op1 == 1) {
         return op1;
     }
-    uint64_t data = 0xFFFFFFFF;
+    uint32_t data = 0xFFFFFFFF;
     // 8 bit
 	for (uint8_t i  = 0x01; i <= 0x05; i++) {
         data = i != 0x05 ? i : 0xFF;
