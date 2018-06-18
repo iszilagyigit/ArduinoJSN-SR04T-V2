@@ -118,9 +118,9 @@ ISR (SPI_STC_vect)
   // if value is 0xFFFF_FFFF -> send all measured data!
   // if the value is between 0x00001 .. 0x00004
   // then return the measured distance for that sensor.
-  if (c == 0xFFFFFFFFL) {
+  if (c == 0xFF) {
     SPDR = measured;
-  }else if (c >= 1 && c <= sizeof(lastMeasure))  { // sensors 1 -4
+  }else if (c >= 1 && c <= 4)  { // sensors 1 -4
       // c == 1 is the first sensor!
     if (lastMeasure[c-1] == sensorOffline) {
       SPDR = 0xFA;
