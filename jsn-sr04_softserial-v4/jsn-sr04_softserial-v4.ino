@@ -17,10 +17,10 @@
 #define S2_RX_Pin 8
 #define S2_VCC_Pin 9
 
-/*
-#define S3_RX_Pin 10
-#define S3_VCC_Pin 11
-*/
+// TODO set other ports as for 4!
+#define S3_RX_Pin 14
+#define S3_VCC_Pin 15
+
 
 // led pin (13) is left out
 #define S4_RX_Pin 14
@@ -59,8 +59,8 @@ void setup() {
   pinMode(S2_RX_Pin, INPUT);
   pinMode(S2_VCC_Pin, OUTPUT);
 
-  pinMode(S3_RX_Pin, INPUT);
-  pinMode(S3_VCC_Pin, OUTPUT);
+pinMode(S3_RX_Pin, INPUT);
+pinMode(S3_VCC_Pin, OUTPUT);
 
   pinMode(S4_RX_Pin, INPUT);
   pinMode(S4_VCC_Pin, OUTPUT);
@@ -114,6 +114,7 @@ ISR (SPI_STC_vect)
       // c == 1 is the first sensor!
       byte sc = lowByte(c) - 1;
       // measurement!
+      byte s1cm = 0xFF;
       if ( sc == 0) {
         s1cm = measure(sensor1, S1_VCC_Pin);
       } else if ( sc == 1) {
@@ -164,6 +165,7 @@ void loop() {
     }
   }
 */
+  delay(1000);
   if (printSerial) {
     // print measurements result
     for (byte sc = 0; sc <= 3; sc++) {
