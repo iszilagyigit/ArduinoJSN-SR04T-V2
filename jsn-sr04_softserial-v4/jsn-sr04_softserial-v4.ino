@@ -35,6 +35,8 @@ SoftwareSerial sensor4(S4_RX_Pin, S4_TX_Pin);
 // print measured  values to seriraloutput in cm
 boolean printSerial = false;
 
+boolean measuring = true;
+
 // last measured values in cm (0xFF sensor N/A or not  working)
 byte lastMeasure[] = {0, 0, 0, 0};
 const byte sensorOffline = 0xFF;
@@ -105,28 +107,21 @@ ISR (SPI_STC_vect)
   unsigned long c = SPDR; // value from the RPI (32 bit!)
 
   // if value is 0xFFFF_FFFF -> send all measured data!
+
+
   // if the value is between 0x00001 .. 0x00004
   // then return the measured distance for that sensor.
   if (c == 0xA0) {
    // command used to switch debug (serial print on/off)
     printSerial = !printSerial;
+    SPDR = 0xAB;
+  } else  if (c == 0xA1) {
+   // command used to switch measuring on and off
+    measuring = !measuring;
+    SPDR = 0xAC;
   } else if (c >= 1 && c <= 4)  { // sensors 1 -4
-      // c == 1 is the first sensor!
-      byte sc = lowByte(c) - 1;
-      // measurement!
-      byte s1cm = 0xFF;
-      if ( sc == 0) {
-        s1cm = measure(sensor1, S1_VCC_Pin);
-      } else if ( sc == 1) {
-        s1cm = measure(sensor2, S2_VCC_Pin);
-      } else if ( sc == 2) {
-        s1cm = measure(sensor3, S3_VCC_Pin);
-      } else if ( sc == 3) {
-        s1cm = measure(sensor4, S4_VCC_Pin);
-      }
-      if (s1cm != lastMeasure[sc]) {
-        lastMeasure[sc] = s1cm;
-      }
+       // c == 1 is the first sensor!
+      byte sc = c-1; 
       if (lastMeasure[sc] == sensorOffline) {
         SPDR = 0xFA;
       }else {
@@ -140,31 +135,36 @@ ISR (SPI_STC_vect)
 }
 
 void loop() {
-/*
+
   unsigned int s1cm = 0;
   unsigned int mincm = 100;
-
-  for (byte sc = 0; sc <= 3; sc++) {
-    if (lastMeasure[sc] != -1) {
-      if ( sc == 0) {
-        s1cm = measure(sensor1, S1_VCC_Pin);
-      } else if ( sc == 1) {
-        s1cm = measure(sensor2, S2_VCC_Pin);
-      } else if ( sc == 2) {
-        s1cm = measure(sensor3, S3_VCC_Pin);
-      } else if ( sc == 3) {
-        s1cm = measure(sensor4, S4_VCC_Pin);
-      }
-      if (s1cm != lastMeasure[sc]) {
-        lastMeasure[sc] = s1cm;
-      }
-      // delay(50);
-      if (s1cm < mincm) {
-        mincm = s1cm;
+  if (measuring) {
+    for (byte sc = 0; sc <= 3; sc++) {
+      if (lastMeasure[sc] != -1) {
+        if ( sc == 0) {
+          s1cm = measure(sensor1, S1_VCC_Pin);
+        } else if ( sc == 1) {
+          s1cm = measure(sensor2, S2_VCC_Pin);
+        } else if ( sc == 2) {
+          s1cm = measure(sensor3, S3_VCC_Pin);
+        } else if ( sc == 3) {
+          s1cm = measure(sensor4, S4_VCC_Pin);
+        }
+        if (s1cm != lastMeasure[sc]) {
+          lastMeasure[sc] = s1cm;
+        }
+        // delay(50);
+        if (s1cm < mincm) {
+          mincm = s1cm;
+        }
       }
     }
+  }else {
+    lastMeasure[0] = 0;
+    lastMeasure[1] = 0;
+    lastMeasure[2] = 0;
+    lastMeasure[3] = 0;
   }
-*/
   delay(1000);
   if (printSerial) {
     // print measurements result
