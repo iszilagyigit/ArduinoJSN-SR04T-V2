@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <SoftwareSerial.h>
 
-//first sensors pins
+// Sensors pins
 
 #define S1_TX_Pin 16
 #define S2_TX_Pin 16
@@ -11,41 +11,34 @@
 #define BUZZER_VCC_Pin 4
 #define BUZZER_IO_Pin 5
 
-
 #define S1_RX_Pin 6
 #define S1_VCC_Pin 7
-
 
 #define S2_RX_Pin 8
 #define S2_VCC_Pin 9
 
-#define S3_RX_Pin 10
-#define S3_VCC_Pin 11
+// TODO set other ports as for 4!
+#define S3_RX_Pin 14
+#define S3_VCC_Pin 15
+
 
 // led pin (13) is left out
-
 #define S4_RX_Pin 14
 #define S4_VCC_Pin 15
 
-
-
 SoftwareSerial sensor1(S1_RX_Pin, S1_TX_Pin);
 SoftwareSerial sensor2(S2_RX_Pin, S2_TX_Pin);
-SoftwareSerial sensor3(S3_RX_Pin, S3_TX_Pin);
+// S3 pins TODO (MOSI/MISO pins are needed for SPI)
+SoftwareSerial sensor3(S4_RX_Pin, S4_TX_Pin);
 SoftwareSerial sensor4(S4_RX_Pin, S4_TX_Pin);
 
 // print measured  values to seriraloutput in cm
-const boolean printSerial = false;
-// make  sound to a buzze
-const boolean makeSound = false;
+boolean printSerial = false;
 
-//sound frequencies
-const unsigned int freq[] = {500, 800, 1300};
+boolean measuring = true;
 
 // last measured values in cm (0xFF sensor N/A or not  working)
 byte lastMeasure[] = {0, 0, 0, 0};
-// 32 bit having the 4 bytes from lastMeasure
-volatile unsigned long measured;
 const byte sensorOffline = 0xFF;
  
 //temp variables for measure function
@@ -68,8 +61,8 @@ void setup() {
   pinMode(S2_RX_Pin, INPUT);
   pinMode(S2_VCC_Pin, OUTPUT);
 
-  pinMode(S3_RX_Pin, INPUT);
-  pinMode(S3_VCC_Pin, OUTPUT);
+pinMode(S3_RX_Pin, INPUT);
+pinMode(S3_VCC_Pin, OUTPUT);
 
   pinMode(S4_RX_Pin, INPUT);
   pinMode(S4_VCC_Pin, OUTPUT);
@@ -97,15 +90,13 @@ void setup() {
 
   pinMode(BUZZER_VCC_Pin, OUTPUT);
 
-  // spi initialization 
-  // (arduino is the save RPi is the master)
+  // SPI slave initialization 
+  // (arduino is the slave,  RPi is the master)
   
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
-
   // turn on SPI in slave mode
   SPCR |= bit(SPE);
-
   // turn on interrupts
   SPCR |= bit(SPIE);  
 }
@@ -116,17 +107,26 @@ ISR (SPI_STC_vect)
   unsigned long c = SPDR; // value from the RPI (32 bit!)
 
   // if value is 0xFFFF_FFFF -> send all measured data!
+
+
   // if the value is between 0x00001 .. 0x00004
   // then return the measured distance for that sensor.
-  if (c == 0xFF) {
-    SPDR = measured;
-  }else if (c >= 1 && c <= 4)  { // sensors 1 -4
-      // c == 1 is the first sensor!
-    if (lastMeasure[c-1] == sensorOffline) {
-      SPDR = 0xFA;
-    }else {
-      SPDR = 0xFF & lastMeasure[c-1];
-    }
+  if (c == 0xA0) {
+   // command used to switch debug (serial print on/off)
+    printSerial = !printSerial;
+    SPDR = 0xAB;
+  } else  if (c == 0xA1) {
+   // command used to switch measuring on and off
+    measuring = !measuring;
+    SPDR = 0xAC;
+  } else if (c >= 1 && c <= 4)  { // sensors 1 -4
+       // c == 1 is the first sensor!
+      byte sc = c-1; 
+      if (lastMeasure[sc] == sensorOffline) {
+        SPDR = 0xFA;
+      }else {
+        SPDR = 0xFF & lastMeasure[sc];
+      }
   } else {
     // the recieved command is not between 1 and nr of sensors
     // 1 -> first sensor! (not starting with 0
@@ -138,38 +138,34 @@ void loop() {
 
   unsigned int s1cm = 0;
   unsigned int mincm = 100;
-
-  for (byte sc = 0; sc <= 3; sc++) {
-    if (lastMeasure[sc] != -1) {
-      if ( sc == 0) {
-        s1cm = measure(sensor1, S1_VCC_Pin);
-      } else if ( sc == 1) {
-        s1cm = measure(sensor2, S2_VCC_Pin);
-      } else if ( sc == 2) {
-        s1cm = measure(sensor3, S3_VCC_Pin);
-      } else if ( sc == 3) {
-        s1cm = measure(sensor4, S4_VCC_Pin);
-      }
-      if (s1cm != lastMeasure[sc]) {
-        lastMeasure[sc] = s1cm;
-      }
-      // delay(50);
-      if (s1cm < mincm) {
-        mincm = s1cm;
+  if (measuring) {
+    for (byte sc = 0; sc <= 3; sc++) {
+      if (lastMeasure[sc] != -1) {
+        if ( sc == 0) {
+          s1cm = measure(sensor1, S1_VCC_Pin);
+        } else if ( sc == 1) {
+          s1cm = measure(sensor2, S2_VCC_Pin);
+        } else if ( sc == 2) {
+          s1cm = measure(sensor3, S3_VCC_Pin);
+        } else if ( sc == 3) {
+          s1cm = measure(sensor4, S4_VCC_Pin);
+        }
+        if (s1cm != lastMeasure[sc]) {
+          lastMeasure[sc] = s1cm;
+        }
+        // delay(50);
+        if (s1cm < mincm) {
+          mincm = s1cm;
+        }
       }
     }
+  }else {
+    lastMeasure[0] = 0;
+    lastMeasure[1] = 0;
+    lastMeasure[2] = 0;
+    lastMeasure[3] = 0;
   }
-
-  if (makeSound) {
-    soundSignal(mincm);
-  }
-
-  unsigned long v4 = (unsigned long) lastMeasure[3];
-  unsigned long v3 = (unsigned long) lastMeasure[2] << 8;
-  unsigned long v2 = (unsigned long) lastMeasure[1] << 16;
-  unsigned long v1 = (unsigned long) lastMeasure[0] << 24;
-  measured = v1 | v2 | v3 | v4;
-
+  delay(1000);
   if (printSerial) {
     // print measurements result
     for (byte sc = 0; sc <= 3; sc++) {
@@ -178,6 +174,14 @@ void loop() {
     }
     Serial.println(" ");
   }
+/*
+  unsigned long v4 = (unsigned long) lastMeasure[3];
+  unsigned long v3 = (unsigned long) lastMeasure[2] << 8;
+  unsigned long v2 = (unsigned long) lastMeasure[1] << 16;
+  unsigned long v1 = (unsigned long) lastMeasure[0] << 24;
+  measured = v1 | v2 | v3 | v4;
+*/
+
 }
 
 // check if the sensor is not returning a 0xFF within one second deactivate sensor
@@ -231,32 +235,8 @@ byte measure(SoftwareSerial &sensor, byte vccPin) {
       mm = 0;
     }
   } while (mm == 0);
-
   digitalWrite(vccPin, LOW);
-
   return mm / 10;
-}
-
-// depending on the minimal measurement make a sound
-void soundSignal(unsigned int aCm) {
-
-  if (aCm < 70) {
-    digitalWrite(BUZZER_VCC_Pin, HIGH);
-    if (aCm > 50) {
-      tone(BUZZER_IO_Pin, freq[0]);
-      delay(500);
-    } else if (aCm > 40) {
-      tone(BUZZER_IO_Pin, freq[1]);
-      delay(1000);
-    } else  if (aCm > 10) {
-      tone(BUZZER_IO_Pin, freq[2]);
-      delay(1500);
-    }
-    noTone(BUZZER_IO_Pin);
-    digitalWrite(BUZZER_VCC_Pin, LOW);
-  } else {
-    noTone(BUZZER_IO_Pin);
-  }
 }
 
 
