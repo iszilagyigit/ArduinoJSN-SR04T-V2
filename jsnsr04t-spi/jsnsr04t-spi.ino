@@ -10,8 +10,8 @@ volatile unsigned long measured;
 void setup() {
  
   // put your setup code here, to run once:
-  pinMode(A3,OUTPUT);
-  digitalWrite(A3, HIGH); //led off
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH); //led off
 
    // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
@@ -57,8 +57,8 @@ ISR (SPI_STC_vect)
 
 void loop() {
   // put your main code here, to run repeatedly:
-  digitalWrite(A3, LOW); //led on
+  digitalWrite(LED_BUILTIN, LOW); //led on
   delay(1000);
-  digitalWrite(A3, HIGH); //led off
+  digitalWrite(LED_BUILTIN, HIGH); //led off
   delay(1000);
 }
