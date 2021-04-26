@@ -13,5 +13,5 @@ Notes: issues with the schema below:
 * sensor is JSN-SR04T-V2 and not HC-SR04 (didn't found any in fritzing)
 
 ![schema docs] (https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png)
-<img align="left" width="300" height="200" src="https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png">
+<img align="left" width="400" height="200" src="https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png">
 
