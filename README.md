@@ -12,6 +12,6 @@ Notes: issues with the schema below:
 * sensor is JSN-SR04T-V2 and not HC-SR04 (didn't found any in fritzing)
 * The buzzer has 3 pins (not 2 as in the picture)
 
-! [schema docs] (https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/fritzing/parkdist-sensor_bb.png)
+! [schema docs] (https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png)
 
 
