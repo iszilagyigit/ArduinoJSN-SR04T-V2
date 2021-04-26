@@ -1,11 +1,11 @@
 /*
-  Blink + SPI recieve mit interrupt
+  Blink + SPI receive mit interrupt
 */
 
 #include <SPI.h>
 #include <SoftwareSerial.h>
 
-const int D2 = 2; // LED_Pin
+#define D2 2 // LED_Pin
 
 #define S1_TX_Pin 16
 #define S2_TX_Pin 16
@@ -77,14 +77,14 @@ void setup() {
   digitalWrite(D2, HIGH);
   checkSensors(0, sensor1, S1_VCC_Pin);
   checkSensors(1, sensor2, S2_VCC_Pin);
-  checkSensors(2, sensor3, S2_VCC_Pin);
-  checkSensors(3, sensor4, S2_VCC_Pin);
+  checkSensors(2, sensor3, S3_VCC_Pin);
+  checkSensors(3, sensor4, S4_VCC_Pin);
   digitalWrite(D2, LOW);
 
-  for (byte i = 1; i<=5; i++) {
-    delay(50);
+  for (byte i = 1; i<=3; i++) {
+    delay(100);
     digitalWrite(D2, HIGH);
-    delay(50);
+    delay(100);
     digitalWrite(D2, LOW);
   }
   
@@ -94,6 +94,7 @@ void setup() {
   /* Enable SPI */
   SPCR = (1<<SPE);
   SPDR = HELLO_SPI_BYTE;
+
 }
 
 // the loop function runs over and over again forever
@@ -106,16 +107,16 @@ void loop() {
     lastMeasure[1] = measure(sensor2, S2_VCC_Pin);
    }      
    if (sensorOnline[2]) {
-    lastMeasure[2] = measure(sensor3, S2_VCC_Pin);
+    lastMeasure[2] = measure(sensor3, S3_VCC_Pin);
    }      
    if (sensorOnline[3]) {
-    lastMeasure[3] = measure(sensor4, S2_VCC_Pin);
+    lastMeasure[3] = measure(sensor4, S4_VCC_Pin);
    }
    digitalWrite(D2, LOW);
    
    noInterrupts();
    spi4Bytes();
-   interrupts();   
+   interrupts();
  }
 
 // check if the sensor is not returning a 0xFF within one second deactivate sensor
@@ -142,24 +143,19 @@ void checkSensors(byte sensorIndex, SoftwareSerial &sensor, byte vccPin) {
 
 byte measure(SoftwareSerial &sensor, byte vccPin) {
   digitalWrite(vccPin, HIGH);
-
-  sensor.listen();
-  // todo eventually 3 measurements with avg?
-  delay(50);
+  sensor.listen(); 
+  delay(10);
   do {
-    count = 0;
-    do {
-      startByte = sensor.read();
-      count++;
-    } while ( startByte != 0xFF && count <= 10);
-    if (count >= 10) {
-      digitalWrite(vccPin, LOW);
-      return 1;
-    }
     // wait till the next 3 bytes are available
-    while (sensor.available() < 3) {
+    while (sensor.available() <= 4) {
       // approx needed for the next 3 bytes
       // delayMicroseconds(10);
+    }
+
+    startByte = sensor.read();
+    if (startByte != 0xFF) {
+      while (sensor.overflow()) {}
+      continue;
     }
     mmHigh = sensor.read();
     mmLow = sensor.read();
