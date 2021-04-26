@@ -1,5 +1,6 @@
 # ArduinoJSN-SR04T-V2
-Arduino project to connect 4 distance sensors to an arduino mini
+Arduino project to connect 4 distance sensors to an arduino mini and communicate the measure with SPI 
+to a Raspberry Pi
 
 ## JSN SR04T V2.0 are in Mode 2
 
