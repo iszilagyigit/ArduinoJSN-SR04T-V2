@@ -9,8 +9,10 @@ See about Mode 2 in the file docs/JSN-SR04T-2.0.pdf
 
 ## Overview
 
-Notes: issues with the schema below:
-* sensor is JSN-SR04T-V2 and not HC-SR04 (didn't found any in fritzing)
+Notes:
+* The four distance sensors is JSN-SR04T-V2 and not HC-SR04 as in immage (didn't found any in fritzing)
+* Level shifter is because the RPI is 3.3V and the used Arduino Mini Pro is 5V
+* The RPI (master) Arduino (slave) communicate with SPI (used a very simple 4 bytes transfer)
 
 ![schema docs] (https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png)
 <img align="left" width="400" height="200" src="https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png">
