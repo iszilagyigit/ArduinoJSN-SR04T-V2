@@ -17,3 +17,7 @@ Notes:
 ![schema docs] (https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png)
 <img align="left" width="400" height="200" src="https://github.com/iszilagyigit/ArduinoJSN-SR04T-V2/blob/master/fritzing/parkdist-sensor_bb.png">
 
+## The GUI is on Raspberry Pi
+
+See:
+https://github.com/iszilagyigit/ParkDistanceControl
